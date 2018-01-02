@@ -1,4 +1,4 @@
-module HtmlElm
+module Html
 
 %default total
 %access export

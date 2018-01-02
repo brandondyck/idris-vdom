@@ -4,4 +4,5 @@ author = Brandon Dyck <brandon@dyck.us>
 brief = "A more sophisticated TEA"
 
 modules = Html, Test
-tests = Test.emptyTest
+tests = Test.main
+pkgs = specdris

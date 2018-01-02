@@ -3,45 +3,31 @@ module Html
 %default total
 %access export
 
-data Node : Type where
-  TextNode : String -> Node
-  ElementNode : (tag : String) -> (children : List Node) -> Node
+data Html : Type where
+  HtmlElement : (tag : String) -> (children : List Html) -> Html
+  HtmlText : String -> Html
 
 mutual
   private
-  renderList : List Node -> String
+  renderList : List Html -> String
   renderList [] = ""
-  renderList (x :: xs) = render x ++ renderList xs
+  renderList (elmt :: elmts) = render elmt ++ renderList elmts
 
-  render : Node -> String
-  render (TextNode s) = s
-  render (ElementNode tag children) =
+  private
+  render : Html -> String
+  render (HtmlElement tag children) =
     let
       open = "<" ++ tag ++ ">"
       close = "</" ++ tag ++ ">"
-      renderedChildren = renderList children
     in
-      open ++ renderedChildren ++ close
+      open ++ renderList children ++ close
+  render (HtmlText s) = s
 
-Show Node where
+Show Html where
   show = render
 
-p : List Node -> Node
-p = ElementNode "p"
+node : String -> List Html -> Html
+node = HtmlElement
 
-div : List Node -> Node
-div = ElementNode "div"
-
-text : String -> Node
-text = TextNode
-
-doc : Node
-doc =
-  p [
-    text "I once met a man",
-    div [
-      text "with a wooden leg",
-      text "named Smith."
-    ],
-    p []
-  ]
+text : String -> Html
+text = HtmlText

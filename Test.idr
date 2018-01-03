@@ -22,8 +22,19 @@ main = spec $ do
       let inner2 = node "c" []
       let outer = node "a" [inner1, inner2]
       show outer `shouldBe` "<a><b></b><c></c></a>"
-    it "show text node as given text" $ do
+    it "shows text node as given text" $ do
       let text1 = text "abc"
       let text2 = text "def"
       let html = show (node "p" [text1, text2])
       html `shouldBe` "<p>abcdef</p>"
+    describe "escapes special characters in text nodes" $ do
+      let showsCharAsEntity = (\char, entity =>
+        it ("shows " ++ singleton char ++ " as &" ++ entity ++ ";") $ do
+          shouldBe
+            (show $ text ("foo" ++ singleton char ++ "bar"))
+            ("foo&" ++ entity ++ ";bar"))
+      showsCharAsEntity '<' "lt"
+      showsCharAsEntity '>' "gt"
+      showsCharAsEntity '&' "amp"
+      showsCharAsEntity '\'' "apos"
+      showsCharAsEntity '"' "quot"

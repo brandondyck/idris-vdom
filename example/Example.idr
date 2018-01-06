@@ -2,13 +2,14 @@ module Main
 
 import Html
 
+Model : Type
+Model = (String, Nat)
+
+init : Model
+init = ("Hello", 5)
+
+view : Model -> Html
+view (s, n) = node "div" $ take n $ map (node "button" . pure . text) $ repeat s
+
 main : JS_IO ()
-main =
-  program $ node "div"
-    [ text "Hello"
-    , node "p"
-      [ text "Id"
-      , node "button" [text "ris"]
-      ]
-    , text "!"
-    ]
+main = program init view

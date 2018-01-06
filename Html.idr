@@ -86,9 +86,9 @@ node = HtmlElement
 text : String -> Html
 text = HtmlText
 
-program : (view : Html) -> JS_IO ()
-program view = do
+program : (init : model) -> (view : model -> Html) -> JS_IO ()
+program init view = do
   body <- documentBody
-  rendered <- createDOMNode view
+  rendered <- createDOMNode (view init)
   appendChild body rendered
   pure ()

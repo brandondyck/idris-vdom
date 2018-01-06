@@ -49,8 +49,46 @@ mutual
 Show Html where
   show = render
 
+%inline
+private
+jscall : (name : String) -> (ty : Type) -> {auto fty : FTy FFI_JS [] ty} ->ty
+jscall name ty = foreign FFI_JS name ty
+
+private
+documentBody : JS_IO Ptr
+documentBody = jscall "document.body" _
+
+private
+appendChild : Ptr -> Ptr -> JS_IO Ptr
+appendChild =
+  jscall "(%0).appendChild(%1)" _
+
+mutual
+  private
+  createDOMNodeList : List Html -> List (JS_IO Ptr)
+  createDOMNodeList [] = []
+  createDOMNodeList (node :: nodes) =
+    createDOMNode node :: createDOMNodeList nodes
+
+  private
+  createDOMNode : Html -> JS_IO Ptr
+  createDOMNode (HtmlElement tag children) = do
+    childNodes <- sequence $ createDOMNodeList children
+    el <- jscall "document.createElement(%0)" (String -> JS_IO Ptr) tag
+    sequence $ map (appendChild el) childNodes
+    pure el
+  createDOMNode (HtmlText text) = do
+    jscall "document.createTextNode(%0)" (String -> JS_IO Ptr) (entitize text)
+
 node : String -> List Html -> Html
 node = HtmlElement
 
 text : String -> Html
 text = HtmlText
+
+program : (view : Html) -> JS_IO ()
+program view = do
+  body <- documentBody
+  rendered <- createDOMNode view
+  appendChild body rendered
+  pure ()

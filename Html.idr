@@ -3,8 +3,13 @@ module Html
 %default total
 %access export
 
+data EventHandler : Type where
+  On : (eventName : String) -> (handler : Ptr -> JS_IO ()) ->
+       EventHandler
+
 data Html : Type where
-  HtmlElement : (tag : String) -> (children : List Html) -> Html
+  HtmlElement : (tag : String) -> (events : List EventHandler) ->
+                (children : List Html) -> Html
   HtmlText : String -> Html
 
 private
@@ -38,7 +43,7 @@ mutual
 
   private
   render : Html -> String
-  render (HtmlElement tag children) =
+  render (HtmlElement tag msg children) =
     let
       open = "<" ++ tag ++ ">"
       close = "</" ++ tag ++ ">"
@@ -63,32 +68,47 @@ appendChild : Ptr -> Ptr -> JS_IO Ptr
 appendChild =
   jscall "(%0).appendChild(%1)" _
 
+partial
+addEventHandler : (eventTarget : Ptr) -> EventHandler -> JS_IO ()
+addEventHandler eventTarget (On eventName handler) =
+  jscall "%0.addEventListener(%1, %2)"
+    (Ptr -> String -> JsFn (Ptr -> JS_IO ()) -> JS_IO ())
+    eventTarget eventName (MkJsFn handler)
+
 mutual
   private
+  partial
   createDOMNodeList : List Html -> List (JS_IO Ptr)
   createDOMNodeList [] = []
   createDOMNodeList (node :: nodes) =
     createDOMNode node :: createDOMNodeList nodes
 
   private
+  partial
   createDOMNode : Html -> JS_IO Ptr
-  createDOMNode (HtmlElement tag children) = do
+  createDOMNode (HtmlElement tag events children) = do
     childNodes <- sequence $ createDOMNodeList children
     el <- jscall "document.createElement(%0)" (String -> JS_IO Ptr) tag
+    sequence $ map (addEventHandler el) events
     sequence $ map (appendChild el) childNodes
     pure el
   createDOMNode (HtmlText text) = do
     jscall "document.createTextNode(%0)" (String -> JS_IO Ptr) (entitize text)
 
-node : String -> List Html -> Html
+node : String -> List EventHandler -> List Html -> Html
 node = HtmlElement
 
 text : String -> Html
 text = HtmlText
 
-program : (init : model) -> (view : model -> Html) -> JS_IO ()
-program init view = do
+on : (eventName : String) -> (handler : Ptr -> JS_IO ()) -> EventHandler
+on = On
+
+partial
+program : Html -> JS_IO ()
+program html = do
   body <- documentBody
-  rendered <- createDOMNode (view init)
+  jscall "%0.innerHTML = ''" (Ptr -> JS_IO ()) body
+  rendered <- createDOMNode html
   appendChild body rendered
   pure ()

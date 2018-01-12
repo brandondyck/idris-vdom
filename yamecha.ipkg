@@ -4,6 +4,6 @@ author = Brandon Dyck <brandon@dyck.us>
 brief = "A more sophisticated TEA"
 version = 0.1.0
 
-modules = Html, Test
-tests = Test.main
+modules = Html--, Test
+--tests = Test.main
 pkgs = specdris

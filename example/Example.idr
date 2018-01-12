@@ -1,6 +1,6 @@
 module Main
 
-import Html
+import VirtualDOM
 
 lazyConst : Lazy a -> b -> a
 lazyConst a b = a

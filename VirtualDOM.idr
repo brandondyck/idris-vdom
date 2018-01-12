@@ -1,4 +1,4 @@
-module Html
+module VirtualDOM
 
 %default total
 %access export

@@ -1,0 +1,7 @@
+package idris-vdom
+
+author = Brandon Dyck <brandon@dyck.us>
+brief = "Virtual DOM in pure Idris"
+version = 0.1.0
+
+modules = VirtualDOM

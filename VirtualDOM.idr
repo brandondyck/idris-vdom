@@ -35,25 +35,6 @@ entitize s =
         Nothing => c :: cs
         (Just entity) => ('&' :: entity) ++ (';' :: cs)
 
-mutual
-  private
-  renderList : List Html -> String
-  renderList [] = ""
-  renderList (elmt :: elmts) = render elmt ++ renderList elmts
-
-  private
-  render : Html -> String
-  render (HtmlElement tag msg children) =
-    let
-      open = "<" ++ tag ++ ">"
-      close = "</" ++ tag ++ ">"
-    in
-      open ++ renderList children ++ close
-  render (HtmlText s) = entitize s
-
-Show Html where
-  show = render
-
 %inline
 private
 jscall : (name : String) -> (ty : Type) -> {auto fty : FTy FFI_JS [] ty} ->ty

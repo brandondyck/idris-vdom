@@ -1,5 +1,7 @@
 module VirtualDOM
 
+import VirtualDOM.DOM
+
 %default total
 %access export
 
@@ -13,14 +15,13 @@ data Html : Type where
                 Html
   HtmlText : String -> Html
 
-private
 entitize : String -> String
 entitize s =
-    let
-      chars = unpack s
-      replaced = foldr replaceChar [] chars
-    in
-      pack replaced
+  let
+    chars = unpack s
+    replaced = foldr replaceChar [] chars
+  in
+    pack replaced
   where
     replacements : List (Char, List Char)
     replacements = map (map unpack)
@@ -36,31 +37,6 @@ entitize s =
         Nothing => c :: cs
         (Just entity) => ('&' :: entity) ++ (';' :: cs)
 
-%inline
-private
-jscall : (name : String) -> (ty : Type) -> {auto fty : FTy FFI_JS [] ty} ->ty
-jscall name ty = foreign FFI_JS name ty
-
-private
-documentBody : JS_IO Ptr
-documentBody = jscall "document.body" _
-
-private
-appendChild : Ptr -> Ptr -> JS_IO Ptr
-appendChild =
-  jscall "(%0).appendChild(%1)" _
-
-private
-setAttribute : Ptr -> String -> String -> JS_IO ()
-setAttribute = jscall "%0.setAttribute(%1, %2)" _
-
-partial
-addEventHandler : (eventTarget : Ptr) -> EventHandler -> JS_IO ()
-addEventHandler eventTarget (On eventName handler) =
-  jscall "%0.addEventListener(%1, %2)"
-    (Ptr -> String -> JsFn (Ptr -> JS_IO ()) -> JS_IO ())
-    eventTarget eventName (MkJsFn handler)
-
 mutual
   private
   partial
@@ -74,13 +50,13 @@ mutual
   createDOMNode : Html -> JS_IO Ptr
   createDOMNode (HtmlElement tag events props children) = do
     childNodes <- sequence $ createDOMNodeList children
-    el <- jscall "document.createElement(%0)" (String -> JS_IO Ptr) tag
-    sequence $ map (addEventHandler el) events
+    el <- createElement tag
+    let listeners = map (\(On name listener) => (name, listener)) events
+    sequence $ map (uncurry $ addEventListener el) listeners
     sequence $ map (uncurry $ setAttribute el) props
     sequence $ map (appendChild el) childNodes
     pure el
-  createDOMNode (HtmlText text) = do
-    jscall "document.createTextNode(%0)" (String -> JS_IO Ptr) (entitize text)
+  createDOMNode (HtmlText text) = createTextNode (entitize text)
 
 node : String -> List EventHandler -> List (String, String) -> List Html -> Html
 node = HtmlElement
@@ -95,7 +71,7 @@ partial
 program : Html -> JS_IO ()
 program html = do
   body <- documentBody
-  jscall "%0.innerHTML = ''" (Ptr -> JS_IO ()) body
+  setInnerHTML body ""
   rendered <- createDOMNode html
   appendChild body rendered
   pure ()

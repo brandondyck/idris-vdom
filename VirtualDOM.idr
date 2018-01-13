@@ -9,7 +9,8 @@ data EventHandler : Type where
 
 data Html : Type where
   HtmlElement : (tag : String) -> (events : List EventHandler) ->
-                (children : List Html) -> Html
+                (props : List (String, String)) -> (children : List Html) ->
+                Html
   HtmlText : String -> Html
 
 private
@@ -49,6 +50,10 @@ appendChild : Ptr -> Ptr -> JS_IO Ptr
 appendChild =
   jscall "(%0).appendChild(%1)" _
 
+private
+setAttribute : Ptr -> String -> String -> JS_IO ()
+setAttribute = jscall "%0.setAttribute(%1, %2)" _
+
 partial
 addEventHandler : (eventTarget : Ptr) -> EventHandler -> JS_IO ()
 addEventHandler eventTarget (On eventName handler) =
@@ -67,16 +72,17 @@ mutual
   private
   partial
   createDOMNode : Html -> JS_IO Ptr
-  createDOMNode (HtmlElement tag events children) = do
+  createDOMNode (HtmlElement tag events props children) = do
     childNodes <- sequence $ createDOMNodeList children
     el <- jscall "document.createElement(%0)" (String -> JS_IO Ptr) tag
     sequence $ map (addEventHandler el) events
+    sequence $ map (uncurry $ setAttribute el) props
     sequence $ map (appendChild el) childNodes
     pure el
   createDOMNode (HtmlText text) = do
     jscall "document.createTextNode(%0)" (String -> JS_IO Ptr) (entitize text)
 
-node : String -> List EventHandler -> List Html -> Html
+node : String -> List EventHandler -> List (String, String) -> List Html -> Html
 node = HtmlElement
 
 text : String -> Html

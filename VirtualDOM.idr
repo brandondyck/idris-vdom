@@ -40,14 +40,14 @@ entitize s =
 mutual
   private
   partial
-  createDOMNodeList : List Html -> List (JS_IO Ptr)
+  createDOMNodeList : List Html -> List (JS_IO Node)
   createDOMNodeList [] = []
   createDOMNodeList (node :: nodes) =
     createDOMNode node :: createDOMNodeList nodes
 
   private
   partial
-  createDOMNode : Html -> JS_IO Ptr
+  createDOMNode : Html -> JS_IO Node
   createDOMNode (HtmlElement tag events props children) = do
     childNodes <- sequence $ createDOMNodeList children
     el <- createElement tag

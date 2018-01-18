@@ -1,2 +1,3 @@
 *.ibc
 example/*.js
+idris-vdom_doc

@@ -25,7 +25,7 @@ setAttribute = jscall "%0.setAttribute(%1, %2)"
   (Ptr -> String -> String -> JS_IO ()) . unNode
 
 createElement : (tag : String) -> JS_IO Node
-createElement = liftA MkNode . jscall "document.createNode(%0)" _
+createElement = liftA MkNode . jscall "document.createElement(%0)" _
 
 createTextNode : (text : String) -> JS_IO Node
 createTextNode = liftA MkNode . jscall "document.createTextNode(%0)" _

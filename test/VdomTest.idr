@@ -13,8 +13,11 @@ Things to test:
 ☐ Node is created on different root than body
 -}
 
-log : a -> JS_IO ()
-log x = jscall "console.log(%0)" (Ptr -> JS_IO ()) (believe_me x)
+data TestResult = Pass | Fail String
+
+failureMsg : TestResult -> Maybe String
+failureMsg Pass = Nothing
+failureMsg (Fail msg) = Just msg
 
 clearBody : JS_IO Node
 clearBody = do
@@ -32,28 +35,35 @@ isNull ptr = (== "true") <$>
 selectorExists : String -> JS_IO Bool
 selectorExists selector = not <$> (querySelector selector >>= isNull)
 
-singleElementIsCreated : JS_IO ()
+singleElementIsCreated : JS_IO TestResult
 singleElementIsCreated = do
   body <- clearBody
   createElement "p" >>= appendChild body
 
   True <- selectorExists "p"
-    | log "Fail: no <p> element"
-  log "Pass"
+    | False => pure (Fail "no <p> element")
+  pure Pass
 
-nestedElementsAreCreated : JS_IO ()
+nestedElementsAreCreated : JS_IO TestResult
 nestedElementsAreCreated = do
   body <- clearBody
   pElement <- createElement "p" >>= appendChild body
   True <- selectorExists "p"
-    | log "Fail: no <p> element"
+    | False => pure (Fail "no <p> element")
 
   createElement "span" >>= appendChild pElement
   True <- selectorExists "span"
-    | log "Fail: no <span> element"
-  log "Pass"
+    | False => pure (Fail "no <span> element")
+  pure Pass
 
 main : JS_IO ()
 main = do
-  singleElementIsCreated
-  nestedElementsAreCreated
+  let tests = [ singleElementIsCreated
+              , nestedElementsAreCreated
+              ]
+  msgs <- mapMaybe failureMsg <$> sequence tests
+  case msgs of
+       [] => putStrLn' "PASS"
+       _ => traverse_ (putStrLn' . ("FAIL: " ++)) msgs
+  
+  

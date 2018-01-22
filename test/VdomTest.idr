@@ -19,12 +19,6 @@ failureMsg : TestResult -> Maybe String
 failureMsg Pass = Nothing
 failureMsg (Fail msg) = Just msg
 
-clearBody : JS_IO Node
-clearBody = do
-  body <- documentBody
-  setInnerHTML body ""
-  pure body
-
 querySelector : String -> JS_IO Ptr
 querySelector = jscall "document.querySelector(%0)" _
 
@@ -37,8 +31,8 @@ selectorExists selector = not <$> (querySelector selector >>= isNull)
 
 singleElementIsCreated : JS_IO TestResult
 singleElementIsCreated = do
-  body <- clearBody
-  createElement "p" >>= appendChild body
+  let html = node "p" [] [] []
+  program html
 
   True <- selectorExists "p"
     | False => pure (Fail "no <p> element")
@@ -46,13 +40,14 @@ singleElementIsCreated = do
 
 nestedElementsAreCreated : JS_IO TestResult
 nestedElementsAreCreated = do
-  body <- clearBody
-  pElement <- createElement "p" >>= appendChild body
+  let html = node "p" [] []
+               [ node "span" [] [] []               
+               ]
+  program html
   True <- selectorExists "p"
     | False => pure (Fail "no <p> element")
 
-  createElement "span" >>= appendChild pElement
-  True <- selectorExists "span"
+  True <- selectorExists "p > span"
     | False => pure (Fail "no <span> element")
   pure Pass
 

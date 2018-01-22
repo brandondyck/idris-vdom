@@ -32,8 +32,8 @@ selectorExists selector = not <$> (querySelector selector >>= isNull)
 singleElementIsCreated : JS_IO TestResult
 singleElementIsCreated = do
   let html = node "p" [] [] []
-  program html
 
+  program html
   True <- selectorExists "p"
     | False => pure (Fail "no <p> element")
   pure Pass
@@ -43,10 +43,8 @@ nestedElementsAreCreated = do
   let html = node "p" [] []
                [ node "span" [] [] []               
                ]
-  program html
-  True <- selectorExists "p"
-    | False => pure (Fail "no <p> element")
 
+  program html
   True <- selectorExists "p > span"
     | False => pure (Fail "no <span> element")
   pure Pass

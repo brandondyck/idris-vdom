@@ -1,5 +1,7 @@
 package idris-vdom
 
+pkgs = specdris
+
 author = Brandon Dyck <brandon@dyck.us>
 brief = "Virtual DOM in pure Idris"
 version = 0.1.0

@@ -1,8 +1,0 @@
-package idris-vdom-tests
-
-pkgs = idris-vdom, specdris
-
-opts = "--sourcepath .. --codegen javascript"
-
-executable = "vdom-tests.js"
-main = Main

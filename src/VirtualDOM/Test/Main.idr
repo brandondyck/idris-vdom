@@ -24,16 +24,23 @@ isNull ptr = (== "true") <$>
 selectorExists : String -> JS_IO Bool
 selectorExists selector = not <$> (querySelector selector >>= isNull)
 
-assertSelectorExistence : (assertion : Bool -> SpecResult) ->
-                          (selector : String) -> JS_IO SpecResult
-assertSelectorExistence assertion selector =
-  selectorExists selector >>= (pure . assertion)
+assertSelect : (shouldExist : Bool) -> (selector : String) ->
+                          JS_IO SpecResult
+assertSelect shouldExist selector = do
+  exists <- selectorExists selector
+  let reason =
+    if shouldExist
+      then "selector should match elements"
+      else "selector should not match elements"
+  if exists == shouldExist
+    then pure Success
+    else pure $ UnaryFailure selector reason
 
-selectorShouldExist : String -> JS_IO SpecResult
-selectorShouldExist = assertSelectorExistence shouldBeTrue
+shouldSelect : String -> JS_IO SpecResult
+shouldSelect = assertSelect True
 
-selectorShouldNotExist : String -> JS_IO SpecResult
-selectorShouldNotExist = assertSelectorExistence shouldBeFalse
+shouldNotSelect : String -> JS_IO SpecResult
+shouldNotSelect = assertSelect False
 
 infixl 2 `collectResult`
 
@@ -50,7 +57,7 @@ singleElementIsCreated =
   it "creates a single element" $ do
     let html = node "p" [] [] []
     program html
-    selectorShouldExist "p"
+    shouldSelect "p"
 
 nestedElementsAreCreated : SpecTree' FFI_JS
 nestedElementsAreCreated =
@@ -59,14 +66,14 @@ nestedElementsAreCreated =
                  [ node "span" [] [] []               
                  ]
     program html
-    selectorShouldExist "p > span"
+    shouldSelect "p > span"
 
 singlePropertyIsSet : SpecTree' FFI_JS
 singlePropertyIsSet =
   it "sets a single property on an element" $ do
     let html = node "p" [] [("class", "testval")] []
     program html
-    selectorShouldExist "p.testval"
+    shouldSelect "p.testval"
 
 duplicatePropertyOverwrites : SpecTree' FFI_JS
 duplicatePropertyOverwrites =
@@ -75,8 +82,8 @@ duplicatePropertyOverwrites =
                            , ("class", "goodval")
                            ] []
     program html
-    selectorShouldNotExist "p.badval"
-      `collectResult` selectorShouldExist "p.goodval"
+    shouldNotSelect "p.badval"
+      `collectResult` shouldSelect "p.goodval"
 
 multiplePropertiesSet : SpecTree' FFI_JS
 multiplePropertiesSet =
@@ -85,7 +92,7 @@ multiplePropertiesSet =
                            , ("title", "titleval")
                            ] []
     program html
-    selectorShouldExist "p.classval[title=titleval]"
+    shouldSelect "p.classval[title=titleval]"
 
 multipleElementsDifferentPropertiesSet : SpecTree' FFI_JS
 multipleElementsDifferentPropertiesSet =
@@ -94,9 +101,9 @@ multipleElementsDifferentPropertiesSet =
                                 , node "p" [] [("class", "b")] []
                                 ]
     program html
-    selectorShouldExist "p.a"
-      `collectResult` selectorShouldExist "p.b"
-      `collectResult` selectorShouldNotExist "p.a.b"
+    shouldSelect "p.a"
+      `collectResult` shouldSelect "p.b"
+      `collectResult` shouldNotSelect "p.a.b"
 
 multipleElementsCreatedInOrder : SpecTree' FFI_JS
 multipleElementsCreatedInOrder =
@@ -105,8 +112,8 @@ multipleElementsCreatedInOrder =
                                 , node "span" [] [] []
                                 ]
     program html
-    selectorShouldExist "p:nth-child(1)"
-      `collectResult` selectorShouldExist "span:nth-child(2)"
+    shouldSelect "p:nth-child(1)"
+      `collectResult` shouldSelect "span:nth-child(2)"
 
 main : JS_IO ()
 main = specIO' $ do

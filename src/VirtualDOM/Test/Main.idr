@@ -52,76 +52,50 @@ collectResult resIO1 resIO2 = do
     res1
     res2
 
-singleElementIsCreated : SpecTree' FFI_JS
-singleElementIsCreated =
-  it "creates a single element" $ do
-    let html = node "p" [] [] []
-    program html
-    shouldSelect "p"
+elementsSpec : SpecTree' FFI_JS
+elementsSpec =
+  describe "elements" $ do
+    it "creates a single element" $ do
+      program $ node "p" [] [] []
+      shouldSelect "p"
+    it "creates a nested element" $ do
+      program $ node "p" [] [] [ node "span" [] [] []
+                               ]
+      shouldSelect "p > span"
+    it "creates elements in the given order" $ do
+      program $ node "div" [] [] [ node "p" [] [] []
+                                 , node "span" [] [] []
+                                 ]
+      shouldSelect "p:nth-child(1)"
+        `collectResult` shouldSelect "span:nth-child(2)"
 
-nestedElementsAreCreated : SpecTree' FFI_JS
-nestedElementsAreCreated =
-  it "creates a nested element" $ do
-    let html = node "p" [] []
-                 [ node "span" [] [] []               
-                 ]
-    program html
-    shouldSelect "p > span"
-
-singlePropertyIsSet : SpecTree' FFI_JS
-singlePropertyIsSet =
-  it "sets a single property on an element" $ do
-    let html = node "p" [] [("class", "testval")] []
-    program html
-    shouldSelect "p.testval"
-
-duplicatePropertyOverwrites : SpecTree' FFI_JS
-duplicatePropertyOverwrites =
-  it "overwrites properties with duplicates" $ do
-    let html = node "p" [] [ ("class", "badval")
-                           , ("class", "goodval")
-                           ] []
-    program html
-    shouldNotSelect "p.badval"
-      `collectResult` shouldSelect "p.goodval"
-
-multiplePropertiesSet : SpecTree' FFI_JS
-multiplePropertiesSet =
-  it "sets multiple properties on an element" $ do
-    let html = node "p" [] [ ("class", "classval")
-                           , ("title", "titleval")
-                           ] []
-    program html
-    shouldSelect "p.classval[title=titleval]"
-
-multipleElementsDifferentPropertiesSet : SpecTree' FFI_JS
-multipleElementsDifferentPropertiesSet =
-  it "sets different properties on multiple elements" $ do
-    let html = node "div" [] [] [ node "p" [] [("class", "a")] []
-                                , node "p" [] [("class", "b")] []
-                                ]
-    program html
-    shouldSelect "p.a"
-      `collectResult` shouldSelect "p.b"
-      `collectResult` shouldNotSelect "p.a.b"
-
-multipleElementsCreatedInOrder : SpecTree' FFI_JS
-multipleElementsCreatedInOrder =
-  it "creates elements in the given order" $ do
-    let html = node "div" [] [] [ node "p" [] [] []
-                                , node "span" [] [] []
-                                ]
-    program html
-    shouldSelect "p:nth-child(1)"
-      `collectResult` shouldSelect "span:nth-child(2)"
+propertiesSpec : SpecTree' FFI_JS
+propertiesSpec =
+  describe "properties" $ do
+    it "sets a single property on an element" $ do
+      program $ node "p" [] [("class", "testval")] []
+      shouldSelect "p.testval"
+    it "overwrites properties with duplicate keys" $ do
+      program $ node "p" [] [ ("class", "badval")
+                            , ("class", "goodval")
+                            ] []
+      shouldNotSelect "p.badval"
+        `collectResult` shouldSelect "p.goodval"
+    it "sets multiple properties on an element" $ do
+      program $ node "p" [] [ ("class", "classval")
+                            , ("title", "titleval")
+                            ] []
+      shouldSelect "p.classval[title=titleval]"
+    it "sets different properties on multiple elements" $ do
+      program $ node "div" [] [] [ node "p" [] [("class", "a")] []
+                                 , node "p" [] [("class", "b")] []
+                                 ]
+      shouldSelect "p.a"
+        `collectResult` shouldSelect "p.b"
+        `collectResult` shouldNotSelect "p.a.b"
 
 main : JS_IO ()
 main = specIO' $ do
   describe "virtual DOM" $ do
-    singleElementIsCreated
-    nestedElementsAreCreated
-    singlePropertyIsSet
-    duplicatePropertyOverwrites
-    multiplePropertiesSet
-    multipleElementsDifferentPropertiesSet
-    multipleElementsCreatedInOrder
+    elementsSpec
+    propertiesSpec

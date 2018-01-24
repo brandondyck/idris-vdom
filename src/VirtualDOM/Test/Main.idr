@@ -42,9 +42,42 @@ nestedElementsAreCreated =
     spanExists <- selectorExists "p > span"
     pure $ shouldBeTrue spanExists
 
+singlePropertyIsSet : SpecTree' FFI_JS
+singlePropertyIsSet =
+  it "sets a single property on an element" $ do
+    let html = node "p" [] [("class", "testval")] []
+    program html
+    pExists <- selectorExists "p.testval"
+    pure $ shouldBeTrue pExists
+
+duplicatePropertyOverwrites : SpecTree' FFI_JS
+duplicatePropertyOverwrites =
+  it "overwrites properties with duplicates" $ do
+    let html = node "p" [] [ ("class", "badval")
+                           , ("class", "goodval")
+                           ] []
+    program html
+    badPropExists <- selectorExists "p.badval"
+    goodPropExists <- selectorExists "p.goodval"
+    pure $ do
+      shouldBeFalse badPropExists
+      shouldBeTrue goodPropExists
+
+multiplePropertiesSet : SpecTree' FFI_JS
+multiplePropertiesSet =
+  it "sets multiple properties on an element" $ do
+    let html = node "p" [] [ ("class", "classval")
+                           , ("title", "titleval")
+                           ] []
+    program html
+    propsExist <- selectorExists "p.classval[title=titleval]"
+    pure $ shouldBeTrue propsExist
+
 main : JS_IO ()
 main = specIO' $ do
   describe "virtual DOM" $ do
     singleElementIsCreated
     nestedElementsAreCreated
-    
+    singlePropertyIsSet
+    duplicatePropertyOverwrites
+    multiplePropertiesSet

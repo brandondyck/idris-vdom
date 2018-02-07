@@ -9,8 +9,8 @@ version = 0.1.0
 sourcedir = src
 
 -- We can't use the test runner for JavaScript, so build a .js file.
-opts = "--codegen javascript"
-executable = "vdom-test.js"
-main = VirtualDOM.Test.Main
+--opts = "--codegen javascript"
+--executable = "vdom-test.js"
+--main = VirtualDOM.Test.Main
 
 modules = VirtualDOM, VirtualDOM.DOM, VirtualDOM.Test.Main

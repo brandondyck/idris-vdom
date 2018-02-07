@@ -9,7 +9,7 @@ Things to test:
 
 ☑ Single element is created
 ☑ Nested elements are created
-☐ Events work on elements
+☑ Events work on elements
 ☑ Properties are created on element
 ☐ Node is created on different root than body
 -}
@@ -23,6 +23,11 @@ isNull ptr = (== "true") <$>
 
 selectorExists : String -> JS_IO Bool
 selectorExists selector = not <$> (querySelector selector >>= isNull)
+
+dispatchEventOnId : (eventName : String) -> (elementId : String) -> JS_IO ()
+dispatchEventOnId eventName elementId = do
+  getElementById elementId >>= dispatchSimpleEvent eventName
+  pure ()
 
 assertSelect : (shouldExist : Bool) -> (selector : String) ->
                           JS_IO SpecResult
@@ -41,6 +46,14 @@ shouldSelect = assertSelect True
 
 shouldNotSelect : String -> JS_IO SpecResult
 shouldNotSelect = assertSelect False
+
+appendBodyParagraph : JS_IO ()
+appendBodyParagraph = do
+  body <- documentBody
+  paragraph <- createElement "p"
+  appendChild body paragraph
+  pure ()
+
 
 infixl 2 `andResult`
 
@@ -94,8 +107,24 @@ propertiesSpec =
         `andResult` shouldSelect "p.b"
         `andResult` shouldNotSelect "p.a.b"
 
+eventsSpec : SpecTree' FFI_JS
+eventsSpec =
+  describe "events" $ do
+    it "executes an event handler" $ do
+      program $ node "button"
+        [on "click" (const appendBodyParagraph)] [("id", "doit")] []
+      dispatchEventOnId "click" "doit"
+      shouldSelect "p"
+    it "does not execute a handler before dispatch" $ do
+      program $ node "button"
+        [on "click" (const appendBodyParagraph)] [("id", "doit")] []
+      notThere <- shouldNotSelect "p"
+      dispatchEventOnId "click" "doit"
+      pure notThere `andResult` shouldSelect "p"
+
 main : JS_IO ()
 main = specIO' $ do
   describe "virtual DOM" $ do
     elementsSpec
     propertiesSpec
+    eventsSpec

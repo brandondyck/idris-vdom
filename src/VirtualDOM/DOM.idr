@@ -15,6 +15,11 @@ jscall name ty = foreign FFI_JS name ty
 documentBody : JS_IO Node
 documentBody = MkNode <$> jscall "document.body" _
 
+getElementById : (elementId : String) -> JS_IO Node
+getElementById elementId = MkNode <$>
+  jscall "document.getElementById(%0)"
+    (String -> JS_IO Ptr) elementId
+
 appendChild : (parent : Node) -> (child : Node) -> JS_IO Node
 appendChild parent child = MkNode <$>
   jscall "(%0).appendChild(%1)" (Ptr -> Ptr -> JS_IO Ptr)
@@ -40,3 +45,9 @@ addEventListener eventTarget eventName listener =
   jscall "%0.addEventListener(%1, %2)"
     (Ptr -> String -> JsFn (Ptr -> JS_IO ()) -> JS_IO ())
     (unNode eventTarget) eventName (MkJsFn listener)
+    
+dispatchSimpleEvent : (eventName : String) -> (eventTarget : Node) -> JS_IO Bool
+dispatchSimpleEvent eventName eventTarget = do
+  sbool <- jscall "%0.dispatchEvent(new Event(%1)).toString()"
+    (Ptr -> String -> JS_IO String) (unNode eventTarget) eventName
+  pure $ sbool == "true"

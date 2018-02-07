@@ -10,7 +10,7 @@ Things to test:
 ☑ Single element is created
 ☑ Nested elements are created
 ☐ Events work on elements
-☐ Properties are created on element
+☑ Properties are created on element
 ☐ Node is created on different root than body
 -}
 
@@ -42,10 +42,10 @@ shouldSelect = assertSelect True
 shouldNotSelect : String -> JS_IO SpecResult
 shouldNotSelect = assertSelect False
 
-infixl 2 `collectResult`
+infixl 2 `andResult`
 
-collectResult : JS_IO SpecResult -> JS_IO SpecResult -> JS_IO SpecResult
-collectResult resIO1 resIO2 = do
+andResult : JS_IO SpecResult -> JS_IO SpecResult -> JS_IO SpecResult
+andResult resIO1 resIO2 = do
   res1 <- resIO1
   res2 <- resIO2
   pure $ do
@@ -67,7 +67,7 @@ elementsSpec =
                                  , node "span" [] [] []
                                  ]
       shouldSelect "p:nth-child(1)"
-        `collectResult` shouldSelect "span:nth-child(2)"
+        `andResult` shouldSelect "span:nth-child(2)"
 
 propertiesSpec : SpecTree' FFI_JS
 propertiesSpec =
@@ -80,7 +80,7 @@ propertiesSpec =
                             , ("class", "goodval")
                             ] []
       shouldNotSelect "p.badval"
-        `collectResult` shouldSelect "p.goodval"
+        `andResult` shouldSelect "p.goodval"
     it "sets multiple properties on an element" $ do
       program $ node "p" [] [ ("class", "classval")
                             , ("title", "titleval")
@@ -91,8 +91,8 @@ propertiesSpec =
                                  , node "p" [] [("class", "b")] []
                                  ]
       shouldSelect "p.a"
-        `collectResult` shouldSelect "p.b"
-        `collectResult` shouldNotSelect "p.a.b"
+        `andResult` shouldSelect "p.b"
+        `andResult` shouldNotSelect "p.a.b"
 
 main : JS_IO ()
 main = specIO' $ do

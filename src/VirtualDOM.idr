@@ -68,8 +68,8 @@ on : (eventName : String) -> (handler : Ptr -> JS_IO ()) -> EventHandler
 on = On
 
 partial
-program : Html -> JS_IO ()
-program html = do
+render : Html -> JS_IO ()
+render html = do
   body <- documentBody
   setInnerHTML body ""
   rendered <- createDOMNode html

@@ -27,7 +27,7 @@ mutual
       ]
 
   main2 : JS_IO ()
-  main2 = program html2
+  main2 = render html2
 
   main : JS_IO ()
-  main = program html1
+  main = render html1

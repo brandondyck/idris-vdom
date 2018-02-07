@@ -69,14 +69,14 @@ elementsSpec : SpecTree' FFI_JS
 elementsSpec =
   describe "elements" $ do
     it "creates a single element" $ do
-      program $ node "p" [] [] []
+      render $ node "p" [] [] []
       shouldSelect "p"
     it "creates a nested element" $ do
-      program $ node "p" [] [] [ node "span" [] [] []
+      render $ node "p" [] [] [ node "span" [] [] []
                                ]
       shouldSelect "p > span"
     it "creates elements in the given order" $ do
-      program $ node "div" [] [] [ node "p" [] [] []
+      render $ node "div" [] [] [ node "p" [] [] []
                                  , node "span" [] [] []
                                  ]
       shouldSelect "p:nth-child(1)"
@@ -86,21 +86,21 @@ propertiesSpec : SpecTree' FFI_JS
 propertiesSpec =
   describe "properties" $ do
     it "sets a single property on an element" $ do
-      program $ node "p" [] [("class", "testval")] []
+      render $ node "p" [] [("class", "testval")] []
       shouldSelect "p.testval"
     it "overwrites properties with duplicate keys" $ do
-      program $ node "p" [] [ ("class", "badval")
+      render $ node "p" [] [ ("class", "badval")
                             , ("class", "goodval")
                             ] []
       shouldNotSelect "p.badval"
         `andResult` shouldSelect "p.goodval"
     it "sets multiple properties on an element" $ do
-      program $ node "p" [] [ ("class", "classval")
+      render $ node "p" [] [ ("class", "classval")
                             , ("title", "titleval")
                             ] []
       shouldSelect "p.classval[title=titleval]"
     it "sets different properties on multiple elements" $ do
-      program $ node "div" [] [] [ node "p" [] [("class", "a")] []
+      render $ node "div" [] [] [ node "p" [] [("class", "a")] []
                                  , node "p" [] [("class", "b")] []
                                  ]
       shouldSelect "p.a"
@@ -111,12 +111,12 @@ eventsSpec : SpecTree' FFI_JS
 eventsSpec =
   describe "events" $ do
     it "executes an event handler" $ do
-      program $ node "button"
+      render $ node "button"
         [on "click" (const appendBodyParagraph)] [("id", "doit")] []
       dispatchEventOnId "click" "doit"
       shouldSelect "p"
     it "does not execute a handler before dispatch" $ do
-      program $ node "button"
+      render $ node "button"
         [on "click" (const appendBodyParagraph)] [("id", "doit")] []
       notThere <- shouldNotSelect "p"
       dispatchEventOnId "click" "doit"

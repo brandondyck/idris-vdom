@@ -69,38 +69,52 @@ elementsSpec : SpecTree' FFI_JS
 elementsSpec =
   describe "elements" $ do
     it "creates a single element" $ do
-      render $ node "p" [] [] []
+      body <- documentBody
+      render body $ node "p" [] [] []
       shouldSelect "p"
     it "creates a nested element" $ do
-      render $ node "p" [] [] [ node "span" [] [] []
+      body <- documentBody
+      render body $ node "p" [] [] [ node "span" [] [] []
                                ]
       shouldSelect "p > span"
     it "creates elements in the given order" $ do
-      render $ node "div" [] [] [ node "p" [] [] []
+      body <- documentBody
+      render body $ node "div" [] [] [ node "p" [] [] []
                                  , node "span" [] [] []
                                  ]
       shouldSelect "p:nth-child(1)"
         `andResult` shouldSelect "span:nth-child(2)"
+    it "creates an element on a specified parent" $ do
+      let divId = "putithere"
+      body <- documentBody
+      render body $ node "div" [] [("id", divId)] []
+      parentDiv <- getElementById divId
+      render parentDiv $ node "p" [] [] []
+      shouldSelect "div > p"
 
 propertiesSpec : SpecTree' FFI_JS
 propertiesSpec =
   describe "properties" $ do
     it "sets a single property on an element" $ do
-      render $ node "p" [] [("class", "testval")] []
+      body <- documentBody
+      render body $ node "p" [] [("class", "testval")] []
       shouldSelect "p.testval"
     it "overwrites properties with duplicate keys" $ do
-      render $ node "p" [] [ ("class", "badval")
+      body <- documentBody
+      render body $ node "p" [] [ ("class", "badval")
                             , ("class", "goodval")
                             ] []
       shouldNotSelect "p.badval"
         `andResult` shouldSelect "p.goodval"
     it "sets multiple properties on an element" $ do
-      render $ node "p" [] [ ("class", "classval")
+      body <- documentBody
+      render body $ node "p" [] [ ("class", "classval")
                             , ("title", "titleval")
                             ] []
       shouldSelect "p.classval[title=titleval]"
     it "sets different properties on multiple elements" $ do
-      render $ node "div" [] [] [ node "p" [] [("class", "a")] []
+      body <- documentBody
+      render body $ node "div" [] [] [ node "p" [] [("class", "a")] []
                                  , node "p" [] [("class", "b")] []
                                  ]
       shouldSelect "p.a"
@@ -111,12 +125,14 @@ eventsSpec : SpecTree' FFI_JS
 eventsSpec =
   describe "events" $ do
     it "executes an event handler" $ do
-      render $ node "button"
+      body <- documentBody
+      render body $ node "button"
         [on "click" (const appendBodyParagraph)] [("id", "doit")] []
       dispatchEventOnId "click" "doit"
       shouldSelect "p"
     it "does not execute a handler before dispatch" $ do
-      render $ node "button"
+      body <- documentBody
+      render body $ node "button"
         [on "click" (const appendBodyParagraph)] [("id", "doit")] []
       notThere <- shouldNotSelect "p"
       dispatchEventOnId "click" "doit"

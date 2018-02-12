@@ -13,6 +13,6 @@ allows local JavaScript, and check the JavaScript console.
 - [x] Properties on nodes
 - [ ] Event listener options
 - [ ] Use diffing renderer that sets listeners only once per node
-- [ ] Allow updating listeners when rendering
-- [ ] Allow rendering on any root element, not just `<body>`
-- [ ] Write some tests already
+- [ ] Allow updating listeners when diffing
+- [x] Allow rendering on any root element, not just `<body>`
+- [x] Write some tests already

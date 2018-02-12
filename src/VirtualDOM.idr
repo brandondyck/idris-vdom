@@ -68,10 +68,9 @@ on : (eventName : String) -> (handler : Ptr -> JS_IO ()) -> EventHandler
 on = On
 
 partial
-render : Html -> JS_IO ()
-render html = do
-  body <- documentBody
-  setInnerHTML body ""
+render : (root : Node) -> Html -> JS_IO ()
+render root html = do
+  setInnerHTML root ""
   rendered <- createDOMNode html
-  appendChild body rendered
+  appendChild root rendered
   pure ()

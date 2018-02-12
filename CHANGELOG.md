@@ -1,8 +1,16 @@
 # Changelog
 
-## [Unreleased]
+## Unreleased
 
-## [0.2.0] - 2018-02-17
+## 0.3.0 - 2018-02-12
+
+### Changed
+
+- `render` takes a `Node` as root
+- Updated to-do list in README.md
+- Reformatted CHANGELOG.md
+
+## 0.2.0 - 2018-02-07
 
 ### Added
 
@@ -16,7 +24,7 @@
 - Rename `VirtualDOM.program` to `VirtualDOM.render`
 - Probably a lot of other things
 
-## [0.1.0]
+## 0.1.0
 
 ### Added
 

@@ -4,7 +4,7 @@ pkgs = specdris
 
 author = Brandon Dyck <brandon@dyck.us>
 brief = "Virtual DOM in pure Idris"
-version = 0.2.0
+version = 0.3.0
 
 sourcedir = src
 

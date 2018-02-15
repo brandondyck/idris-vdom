@@ -127,16 +127,25 @@ eventsSpec =
     it "executes an event handler" $ do
       body <- documentBody
       render body $ node "button"
-        [on "click" (const appendBodyParagraph)] [("id", "doit")] []
+        [on "click" (const appendBodyParagraph) noOptions] [("id", "doit")] []
       dispatchEventOnId "click" "doit"
       shouldSelect "p"
     it "does not execute a handler before dispatch" $ do
       body <- documentBody
       render body $ node "button"
-        [on "click" (const appendBodyParagraph)] [("id", "doit")] []
+        [on "click" (const appendBodyParagraph) noOptions] [("id", "doit")] []
       notThere <- shouldNotSelect "p"
       dispatchEventOnId "click" "doit"
       pure notThere `andResult` shouldSelect "p"
+    it "respects the once option on listeners" $ do
+      let opts = record { once = Just True } noOptions
+      body <- documentBody
+      render body $ node "button"
+        [on "click" (const appendBodyParagraph) opts] [("id", "doit")] []
+      dispatchEventOnId "click" "doit"
+      dispatchEventOnId "click" "doit"
+      shouldSelect "p:only-of-type"
+        `andResult` shouldNotSelect "p:nth-of-type(2)"
 
 main : JS_IO ()
 main = specIO' $ do

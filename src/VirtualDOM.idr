@@ -7,7 +7,7 @@ import VirtualDOM.DOM
 
 data EventHandler : Type where
   On : (eventName : String) -> (handler : Ptr -> JS_IO ()) ->
-       EventHandler
+       (opts : ListenerOptions) -> EventHandler
 
 data Html : Type where
   HtmlElement : (tag : String) -> (events : List EventHandler) ->
@@ -48,14 +48,19 @@ mutual
   private
   partial
   createDOMNode : Html -> JS_IO Node
-  createDOMNode (HtmlElement tag events props children) = do
-    childNodes <- sequence $ createDOMNodeList children
-    el <- createElement tag
-    let listeners = map (\(On name listener) => (name, listener)) events
-    sequence $ map (uncurry $ addEventListener el) listeners
-    sequence $ map (uncurry $ setAttribute el) props
-    sequence $ map (appendChild el) childNodes
-    pure el
+  createDOMNode (HtmlElement tag events props children) =
+    do
+      childNodes <- sequence $ createDOMNodeList children
+      el <- createElement tag
+      sequence $ map (addEventHandler el) events
+      sequence $ map (uncurry $ setAttribute el) props
+      sequence $ map (appendChild el) childNodes
+      pure el
+    where
+      partial
+      addEventHandler : Node -> EventHandler -> JS_IO ()
+      addEventHandler element (On eventName handler opts) =
+        addEventListener element eventName handler opts
   createDOMNode (HtmlText text) = createTextNode (entitize text)
 
 node : String -> List EventHandler -> List (String, String) -> List Html -> Html
@@ -64,7 +69,8 @@ node = HtmlElement
 text : String -> Html
 text = HtmlText
 
-on : (eventName : String) -> (handler : Ptr -> JS_IO ()) -> EventHandler
+on : (eventName : String) -> (handler : Ptr -> JS_IO ()) ->
+     (opts : ListenerOptions) -> EventHandler
 on = On
 
 partial

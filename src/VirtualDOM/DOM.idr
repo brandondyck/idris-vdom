@@ -38,13 +38,30 @@ createTextNode = liftA MkNode . jscall "document.createTextNode(%0)" _
 setInnerHTML : (element : Node) -> (html : String) -> JS_IO ()
 setInnerHTML = jscall "%0.innerHTML = %1" (Ptr -> String -> JS_IO ()) . unNode
 
+record ListenerOptions where
+  constructor MkListenerOptions
+  once : Maybe Bool
+
+noOptions : ListenerOptions
+noOptions = MkListenerOptions Nothing
+
+jsonParse : (json : String) -> JS_IO Ptr
+jsonParse = jscall "JSON.parse(%0)" _
+
 partial
 addEventListener : (eventTarget : Node) -> (eventName : String) ->
-                  (listener : Ptr -> JS_IO ()) -> JS_IO ()
-addEventListener eventTarget eventName listener =
-  jscall "%0.addEventListener(%1, %2)"
-    (Ptr -> String -> JsFn (Ptr -> JS_IO ()) -> JS_IO ())
-    (unNode eventTarget) eventName (MkJsFn listener)
+                   (listener : Ptr -> JS_IO ()) ->
+                   (options : ListenerOptions) ->
+                   JS_IO ()
+addEventListener eventTarget eventName listener options = do
+  let optString = case once options of
+                       Nothing => "{}"
+                       Just False => """{"once":false}"""
+                       Just True => """{"once":true}"""
+  optObj <- jsonParse optString
+  jscall "%0.addEventListener(%1, %2, %3)"
+    (Ptr -> String -> JsFn (Ptr -> JS_IO ()) -> Ptr -> JS_IO ())
+    (unNode eventTarget) eventName (MkJsFn listener) optObj
     
 dispatchSimpleEvent : (eventName : String) -> (eventTarget : Node) -> JS_IO Bool
 dispatchSimpleEvent eventName eventTarget = do

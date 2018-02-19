@@ -74,9 +74,14 @@ on : (eventName : String) -> (handler : Ptr -> JS_IO ()) ->
 on = On
 
 partial
-render : (root : Node) -> Html -> JS_IO ()
-render root html = do
-  setInnerHTML root ""
-  rendered <- createDOMNode html
-  appendChild root rendered
-  pure ()
+render : (root : Node) -> (old : Maybe Html) -> (new : Maybe Html) -> JS_IO ()
+render root Nothing Nothing = pure ()
+render root Nothing (Just html) =
+  do
+    setInnerHTML root ""
+    rendered <- createDOMNode html
+    appendChild root rendered
+    pure ()
+render root (Just x) Nothing = ?render_rhs_1
+render root (Just x) (Just y) = ?render_rhs_5
+

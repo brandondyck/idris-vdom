@@ -11,7 +11,7 @@ Things to test:
 ☑ Nested elements are created
 ☑ Events work on elements
 ☑ Properties are created on element
-☐ Node is created on different root than body
+☑ Node is created on different root than body
 -}
 
 querySelector : String -> JS_IO Ptr
@@ -78,16 +78,16 @@ elementsSpec =
   describe "elements" $ do
     it "creates a single element" $ do
       body <- documentBody
-      render body $ node "p" [] [] []
+      render body Nothing $ Just $ node "p" [] [] []
       shouldSelect "p"
     it "creates a nested element" $ do
       body <- documentBody
-      render body $ node "p" [] [] [ node "span" [] [] []
+      render body Nothing $ Just $ node "p" [] [] [ node "span" [] [] []
                                ]
       shouldSelect "p > span"
     it "creates elements in the given order" $ do
       body <- documentBody
-      render body $ node "div" [] [] [ node "p" [] [] []
+      render body Nothing $ Just $ node "div" [] [] [ node "p" [] [] []
                                  , node "span" [] [] []
                                  ]
       shouldSelect "p:nth-child(1)"
@@ -95,9 +95,9 @@ elementsSpec =
     it "creates an element on a specified parent" $ do
       let divId = "putithere"
       body <- documentBody
-      render body $ node "div" [] [("id", divId)] []
+      render body Nothing $ Just $ node "div" [] [("id", divId)] []
       parentDiv <- getElementById divId
-      render parentDiv $ node "p" [] [] []
+      render parentDiv Nothing $ Just $ node "p" [] [] []
       shouldSelect "div > p"
 
 propertiesSpec : SpecTree' FFI_JS
@@ -105,24 +105,24 @@ propertiesSpec =
   describe "properties" $ do
     it "sets a single property on an element" $ do
       body <- documentBody
-      render body $ node "p" [] [("class", "testval")] []
+      render body Nothing $ Just $ node "p" [] [("class", "testval")] []
       shouldSelect "p.testval"
     it "overwrites properties with duplicate keys" $ do
       body <- documentBody
-      render body $ node "p" [] [ ("class", "badval")
+      render body Nothing $ Just $ node "p" [] [ ("class", "badval")
                             , ("class", "goodval")
                             ] []
       shouldNotSelect "p.badval"
         `andResult` shouldSelect "p.goodval"
     it "sets multiple properties on an element" $ do
       body <- documentBody
-      render body $ node "p" [] [ ("class", "classval")
+      render body Nothing $ Just $ node "p" [] [ ("class", "classval")
                             , ("title", "titleval")
                             ] []
       shouldSelect "p.classval[title=titleval]"
     it "sets different properties on multiple elements" $ do
       body <- documentBody
-      render body $ node "div" [] [] [ node "p" [] [("class", "a")] []
+      render body Nothing $ Just $ node "div" [] [] [ node "p" [] [("class", "a")] []
                                  , node "p" [] [("class", "b")] []
                                  ]
       shouldSelect "p.a"
@@ -134,13 +134,13 @@ eventsSpec =
   describe "events" $ do
     it "executes an event handler" $ do
       body <- documentBody
-      render body $ node "button"
+      render body Nothing $ Just $ node "button"
         [on "click" (const appendBodyParagraph) noOptions] [("id", "doit")] []
       dispatchEventOnId "click" "doit"
       shouldSelect "p"
     it "does not execute a handler before dispatch" $ do
       body <- documentBody
-      render body $ node "button"
+      render body Nothing $ Just $ node "button"
         [on "click" (const appendBodyParagraph) noOptions] [("id", "doit")] []
       notThere <- shouldNotSelect "p"
       dispatchEventOnId "click" "doit"
@@ -148,7 +148,7 @@ eventsSpec =
     it "respects the once option on listeners" $ do
       let opts = record { once = Just True } noOptions
       body <- documentBody
-      render body $ node "button"
+      render body Nothing $ Just $ node "button"
         [on "click" (const appendBodyParagraph) opts] [("id", "doit")] []
       dispatchEventOnId "click" "doit"
       dispatchEventOnId "click" "doit"
@@ -157,7 +157,7 @@ eventsSpec =
     it "responds on capture when capture == true" $ do
       let opts = record { capture = Just True } noOptions
       body <- documentBody
-      render body $ node "div"
+      render body Nothing $ Just $ node "div"
         [ on "click" (const $ appendBodyParagraphWithId "first") opts] []
         [ node "button"
             [on "click" (const $ appendBodyParagraphWithId "second") opts]
@@ -169,7 +169,7 @@ eventsSpec =
     -- it "responds on bubble when capture == false" $ do
     --   let opts = record { capture = Just False } noOptions
     --   body <- documentBody
-    --   render body $ node "div"
+    --   render body Nothing $ Just $ node "div"
     --     [ on "click" (const $ appendBodyParagraphWithId "second") opts] []
     --     [ node "div"
     --         [ on "click" (const $ appendBodyParagraphWithId "first") opts ]

@@ -25,7 +25,11 @@ mutual
       ]
 
   main2 : JS_IO ()
-  main2 = documentBody >>= flip render html2
+  main2 = do
+    body <- documentBody
+    render body Nothing (Just html2)
 
   main : JS_IO ()
-  main = documentBody >>= flip render html1
+  main = do
+    body <- documentBody
+    render body Nothing (Just html1)

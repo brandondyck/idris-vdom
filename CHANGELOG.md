@@ -6,6 +6,7 @@
 
 - Listeners accept `once` option
 - Listeners accept `captures` option
+- Listeners accept `passive` option
 
 ### Changed
 

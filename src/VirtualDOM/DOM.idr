@@ -44,9 +44,10 @@ record ListenerOptions where
   constructor MkListenerOptions
   once : Maybe Bool
   capture : Maybe Bool
+  passive : Maybe Bool
 
 noOptions : ListenerOptions
-noOptions = MkListenerOptions Nothing Nothing
+noOptions = MkListenerOptions Nothing Nothing Nothing
 
 jsonParse : (json : String) -> JS_IO Ptr
 jsonParse = jscall "JSON.parse(%0)" _
@@ -60,8 +61,9 @@ addEventListener eventTarget eventName listener options =
   do
     let optStrings =
           mapMaybe optToJsonField
-            [ ("once", once options)
-            , ("capture", capture options)
+            [ ("once", once)
+            , ("capture", capture)
+            , ("passive", passive)
             ]
     let optString = "{" ++ (foldr (++) "" (intersperse "," optStrings)) ++ "}"
     optObj <- jsonParse optString
@@ -69,9 +71,9 @@ addEventListener eventTarget eventName listener options =
       (Ptr -> String -> JsFn (Ptr -> JS_IO ()) -> Ptr -> JS_IO ())
       (unNode eventTarget) eventName (MkJsFn listener) optObj
   where
-    optToJsonField : (String, Maybe Bool) -> Maybe String
-    optToJsonField (name, maybeVal) = do
-      val <- maybeVal
+    optToJsonField : (String, ListenerOptions -> Maybe Bool) -> Maybe String
+    optToJsonField (name, getVal) = do
+      val <- getVal options
       let valJson = if val then "true" else "false"
       pure ("\"" ++ name ++ "\"" ++ ":" ++ valJson)
     

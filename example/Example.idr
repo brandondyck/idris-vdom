@@ -1,6 +1,7 @@
 module Main
 
 import VirtualDOM
+import VirtualDOM.DOM
 
 lazyConst : Lazy a -> b -> a
 lazyConst a b = a
@@ -12,13 +13,13 @@ mutual
   html1 : Html
   html1 =
     node "div" [] []
-      [ node "button" [ on "click" $ lazyConst main2 ] [] [ text "Toggle list" ]
+      [ node "button" [ on "click" (lazyConst main2) noOptions ] [] [ text "Toggle list" ]
       ]
 
   html2 : Html
   html2 =
     node "div" [] []
-      [ node "button" [ on "click" $ lazyConst main ] [] [ text "Toggle list" ]
+      [ node "button" [ on "click" (lazyConst main) noOptions ] [] [ text "Toggle list" ]
       , node "ol" [] [("style", "display:none"), ("style", listStyle)]
         [ node "li" [] [] [text "Wash the dishes"]
         , node "li" [] [] [text "Grate the carrots"]
@@ -27,7 +28,7 @@ mutual
       ]
 
   main2 : JS_IO ()
-  main2 = render html2
+  main2 = documentBody >>= flip render html2
 
   main : JS_IO ()
-  main = render html1
+  main = documentBody >>= flip render html1

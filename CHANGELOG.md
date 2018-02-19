@@ -2,8 +2,14 @@
 
 ## Unreleased
 
+### Added
+
 - Listeners accept `once` option
 - Listeners accept `captures` option
+
+### Changed
+
+- Removed `lazyConst` from example
 
 ## 0.3.0 - 2018-02-12
 

@@ -166,18 +166,18 @@ eventsSpec =
       dispatchEventOnId "click" "doit"
       shouldSelect "p#first:nth-of-type(1)"
         `andResult` shouldSelect "p#second:nth-of-type(2)"
-    -- it "responds on bubble when capture == false" $ do
-    --   let opts = record { capture = Just False } noOptions
-    --   body <- documentBody
-    --   render body Nothing $ Just $ node "div"
-    --     [ on "click" (const $ appendBodyParagraphWithId "second") opts] []
-    --     [ node "div"
-    --         [ on "click" (const $ appendBodyParagraphWithId "first") opts ]
-    --         [("id", "doit")] []
-    --     ]
-    --   dispatchEventOnId "click" "doit"
-    --   shouldSelect "p#first:nth-of-type(1)"
-    --     `andResult` shouldSelect "p#second:nth-of-type(2)"
+    it "responds on bubble when capture == false" $ do
+      let opts = record { capture = Just False } noOptions
+      body <- documentBody
+      render body Nothing $ Just $ node "div"
+        [ on "click" (const $ appendBodyParagraphWithId "second") opts] []
+        [ node "div"
+            [ on "click" (const $ appendBodyParagraphWithId "first") opts ]
+            [("id", "doit")] []
+        ]
+      dispatchEventOnId "click" "doit"
+      shouldSelect "p#first:nth-of-type(1)"
+        `andResult` shouldSelect "p#second:nth-of-type(2)"
 
 main : JS_IO ()
 main = specIO' $ do

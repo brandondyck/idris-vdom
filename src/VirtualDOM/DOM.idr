@@ -80,7 +80,7 @@ addEventListener eventTarget eventName listener options =
 dispatchEvent : (eventName : String) -> (bubbles : Bool) -> (eventTarget : Node) -> JS_IO Bool
 dispatchEvent eventName bubbles eventTarget = do
   let bubblesInt = if bubbles then 1 else 0
-  sbool <- jscall "%0.dispatchEvent(new Event(%1),{bubbles:%2===1}).toString()"
+  sbool <- jscall "%0.dispatchEvent(new Event(%1,{bubbles:%2===1})).toString()"
     (Ptr -> String -> Int -> JS_IO String)
     (unNode eventTarget) eventName bubblesInt
   pure $ sbool == "true"

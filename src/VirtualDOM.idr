@@ -75,13 +75,12 @@ on = On
 
 partial
 render : (root : Node) -> (old : Maybe Html) -> (new : Maybe Html) -> JS_IO ()
-render root Nothing Nothing = pure ()
+render root old Nothing = setInnerHTML root ""
 render root Nothing (Just html) =
   do
     setInnerHTML root ""
     rendered <- createDOMNode html
     appendChild root rendered
     pure ()
-render root (Just x) Nothing = ?render_rhs_1
 render root (Just x) (Just y) = ?render_rhs_5
 

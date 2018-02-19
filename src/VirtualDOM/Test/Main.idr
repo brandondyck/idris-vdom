@@ -181,7 +181,14 @@ eventsSpec =
 
 main : JS_IO ()
 main = specIO' $ do
-  describe "virtual DOM" $ do
+  describe "initial rendering" $ do
     elementsSpec
     propertiesSpec
     eventsSpec
+  describe "subsequent rendering" $ do
+    it "clears the DOM when virtual DOM is Nothing" $ do
+      body <- documentBody
+      let html = Just $ node "p" [] [] []
+      render body Nothing html
+      render body html Nothing
+      shouldNotSelect "body *"

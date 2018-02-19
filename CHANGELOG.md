@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Listeners accept `once` option
+- Listeners accept `captures` option
 
 ## 0.3.0 - 2018-02-12
 

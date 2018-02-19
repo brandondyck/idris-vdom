@@ -26,7 +26,7 @@ selectorExists selector = not <$> (querySelector selector >>= isNull)
 
 dispatchEventOnId : (eventName : String) -> (elementId : String) -> JS_IO ()
 dispatchEventOnId eventName elementId = do
-  getElementById elementId >>= dispatchSimpleEvent eventName
+  getElementById elementId >>= dispatchEvent eventName True
   pure ()
 
 assertSelect : (shouldExist : Bool) -> (selector : String) ->
@@ -51,6 +51,14 @@ appendBodyParagraph : JS_IO ()
 appendBodyParagraph = do
   body <- documentBody
   paragraph <- createElement "p"
+  appendChild body paragraph
+  pure ()
+
+appendBodyParagraphWithId : String -> JS_IO ()
+appendBodyParagraphWithId elementId = do
+  body <- documentBody
+  paragraph <- createElement "p"
+  setAttribute paragraph "id" elementId
   appendChild body paragraph
   pure ()
 
@@ -146,6 +154,30 @@ eventsSpec =
       dispatchEventOnId "click" "doit"
       shouldSelect "p:only-of-type"
         `andResult` shouldNotSelect "p:nth-of-type(2)"
+    it "responds on capture when capture == true" $ do
+      let opts = record { capture = Just True } noOptions
+      body <- documentBody
+      render body $ node "div"
+        [ on "click" (const $ appendBodyParagraphWithId "first") opts] []
+        [ node "button"
+            [on "click" (const $ appendBodyParagraphWithId "second") opts]
+            [("id", "doit")] []
+        ]
+      dispatchEventOnId "click" "doit"
+      shouldSelect "p#first:nth-of-type(1)"
+        `andResult` shouldSelect "p#second:nth-of-type(2)"
+    -- it "responds on bubble when capture == false" $ do
+    --   let opts = record { capture = Just False } noOptions
+    --   body <- documentBody
+    --   render body $ node "div"
+    --     [ on "click" (const $ appendBodyParagraphWithId "second") opts] []
+    --     [ node "div"
+    --         [ on "click" (const $ appendBodyParagraphWithId "first") opts ]
+    --         [("id", "doit")] []
+    --     ]
+    --   dispatchEventOnId "click" "doit"
+    --   shouldSelect "p#first:nth-of-type(1)"
+    --     `andResult` shouldSelect "p#second:nth-of-type(2)"
 
 main : JS_IO ()
 main = specIO' $ do

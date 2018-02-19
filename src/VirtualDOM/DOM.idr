@@ -1,5 +1,7 @@
 module VirtualDOM.DOM
 
+import Data.List
+
 %default total
 %access export
 
@@ -41,9 +43,10 @@ setInnerHTML = jscall "%0.innerHTML = %1" (Ptr -> String -> JS_IO ()) . unNode
 record ListenerOptions where
   constructor MkListenerOptions
   once : Maybe Bool
+  capture : Maybe Bool
 
 noOptions : ListenerOptions
-noOptions = MkListenerOptions Nothing
+noOptions = MkListenerOptions Nothing Nothing
 
 jsonParse : (json : String) -> JS_IO Ptr
 jsonParse = jscall "JSON.parse(%0)" _
@@ -53,18 +56,29 @@ addEventListener : (eventTarget : Node) -> (eventName : String) ->
                    (listener : Ptr -> JS_IO ()) ->
                    (options : ListenerOptions) ->
                    JS_IO ()
-addEventListener eventTarget eventName listener options = do
-  let optString = case once options of
-                       Nothing => "{}"
-                       Just False => """{"once":false}"""
-                       Just True => """{"once":true}"""
-  optObj <- jsonParse optString
-  jscall "%0.addEventListener(%1, %2, %3)"
-    (Ptr -> String -> JsFn (Ptr -> JS_IO ()) -> Ptr -> JS_IO ())
-    (unNode eventTarget) eventName (MkJsFn listener) optObj
+addEventListener eventTarget eventName listener options =
+  do
+    let optStrings =
+          mapMaybe optToJsonField
+            [ ("once", once options)
+            , ("capture", capture options)
+            ]
+    let optString = "{" ++ (foldr (++) "" (intersperse "," optStrings)) ++ "}"
+    optObj <- jsonParse optString
+    jscall "%0.addEventListener(%1, %2, %3)"
+      (Ptr -> String -> JsFn (Ptr -> JS_IO ()) -> Ptr -> JS_IO ())
+      (unNode eventTarget) eventName (MkJsFn listener) optObj
+  where
+    optToJsonField : (String, Maybe Bool) -> Maybe String
+    optToJsonField (name, maybeVal) = do
+      val <- maybeVal
+      let valJson = if val then "true" else "false"
+      pure ("\"" ++ name ++ "\"" ++ ":" ++ valJson)
     
-dispatchSimpleEvent : (eventName : String) -> (eventTarget : Node) -> JS_IO Bool
-dispatchSimpleEvent eventName eventTarget = do
-  sbool <- jscall "%0.dispatchEvent(new Event(%1)).toString()"
-    (Ptr -> String -> JS_IO String) (unNode eventTarget) eventName
+dispatchEvent : (eventName : String) -> (bubbles : Bool) -> (eventTarget : Node) -> JS_IO Bool
+dispatchEvent eventName bubbles eventTarget = do
+  let bubblesInt = if bubbles then 1 else 0
+  sbool <- jscall "%0.dispatchEvent(new Event(%1),{bubbles:%2===1}).toString()"
+    (Ptr -> String -> Int -> JS_IO String)
+    (unNode eventTarget) eventName bubblesInt
   pure $ sbool == "true"

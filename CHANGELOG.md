@@ -2,11 +2,14 @@
 
 ## Unreleased
 
+## 0.4.0 - 2018-02-18
+
 ### Added
 
 - Listeners accept `once` option
 - Listeners accept `captures` option
 - Listeners accept `passive` option
+- Another checkbox in README.md
 
 ### Changed
 

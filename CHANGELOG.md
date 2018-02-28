@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Reorganized package
+- Tests and example can be built without installing package
+
 ## 0.4.0 - 2018-02-18
 
 ### Added

@@ -2,7 +2,7 @@ package idris-vdom
 
 author = Brandon Dyck <brandon@dyck.us>
 brief = "Virtual DOM in pure Idris"
-version = 0.4.0
+version = 0.5.0
 
 sourcedir = src
 

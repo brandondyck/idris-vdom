@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 - 2018-03-01
+
 ### Added
 
 - Some regression tests for renderer

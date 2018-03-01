@@ -75,7 +75,7 @@ on = On
 
 partial
 render : (root : Node) -> (old : Maybe Html) -> (new : Maybe Html) -> JS_IO ()
-render root old Nothing = setInnerHTML root ""
+render root old Nothing = pure ()
 render root Nothing (Just html) =
   do
     setInnerHTML root ""

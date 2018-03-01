@@ -179,16 +179,22 @@ eventsSpec =
       shouldSelect "p#first:nth-of-type(1)"
         `andResult` shouldSelect "p#second:nth-of-type(2)"
 
+clearBody : JS_IO SpecResult -> JS_IO SpecResult
+clearBody resultIO = do
+  result <- resultIO
+  body <- documentBody
+  setInnerHTML body ""
+  pure result
+
 main : JS_IO ()
-main = specIO' $ do
+main = specIO' {around = clearBody} $ do
   describe "initial rendering" $ do
     elementsSpec
     propertiesSpec
     eventsSpec
   describe "subsequent rendering" $ do
-    it "clears the DOM when virtual DOM is Nothing" $ do
+    it "leaves empty DOM empty when old and new virtual DOMs are Nothing" $ do
       body <- documentBody
-      let html = Just $ node "p" [] [] []
-      render body Nothing html
-      render body html Nothing
-      shouldNotSelect "body *"
+      precondition <- shouldNotSelect "body *"
+      render body Nothing Nothing
+      pure precondition `andResult` shouldNotSelect "body *"

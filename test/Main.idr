@@ -198,3 +198,58 @@ main = specIO' {around = clearBody} $ do
       precondition <- shouldNotSelect "body *"
       render body Nothing Nothing
       pure precondition `andResult` shouldNotSelect "body *"
+    it "empties DOM when old virtual DOM is Just and new one is Nothing" $ do
+      body <- documentBody
+      let html = node "div" [] [] [ node "p" [] [] [] ]
+      render body Nothing (Just html)
+      precondition <- shouldSelect "body > div > p"
+      render body (Just html) Nothing
+      pure precondition `andResult` shouldNotSelect "body *"
+    it "replaces DOM elements when old and new virtual DOMs are Just" $
+      let
+        oldHtml = Just $ node "div" [] []
+          [ node "p" [] [] [ text "paragraph 1" ]
+          , node "p" [] [] [ text "paragraph 2" ]
+          ]
+        newHtml = Just $ node "p" [] []
+          [ node "div" [] [] [ text "div 1" ]
+          , node "div" [] [] [ text "div 2" ]
+          ]
+      in do
+        body <- documentBody
+        render body Nothing oldHtml
+        render body oldHtml newHtml
+        shouldNotSelect "body > div"
+          `andResult` shouldSelect "body > p > div:nth-of-type(2)"
+    it "removes element attributes when they are in old virtual DOM and not in new" $
+      let
+        oldHtml = Just $ node "div" []
+          [ ("style", "color:red")
+          , ("title", "The div")
+          ] []
+        newHtml = Just $ node "div" []
+          [ ("title", "The div") ] []
+      in do
+        body <- documentBody
+        render body Nothing oldHtml
+        precondition <- shouldSelect "body > div[style][title]"
+        render body oldHtml newHtml
+        pure precondition
+          `andResult` shouldNotSelect "body > div[style][title]"
+          `andResult` shouldSelect "body > div[title]"
+    it "adds element attributes when they are in new virtual DOM and not in old" $
+      let
+        oldHtml = Just $ node "div" []
+          [ ("title", "The div") ] []
+        newHtml = Just $ node "div" []
+          [ ("style", "color:red")
+          , ("title", "The div")
+          ] []
+      in do
+        body <- documentBody
+        render body Nothing oldHtml
+        precondition <- shouldNotSelect "body > div[style][title]"
+          `andResult` shouldSelect "body > div[title]"
+        render body oldHtml newHtml
+        pure precondition
+          `andResult` shouldSelect "body > div[style][title]"

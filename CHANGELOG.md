@@ -2,10 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- Some regression tests for renderer
+
 ### Changed
 
 - Reorganized package
 - Tests and example can be built without installing package
+- Renderer handles all cases naïvely
 
 ## 0.4.0 - 2018-02-18
 

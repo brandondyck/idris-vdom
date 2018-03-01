@@ -1,4 +1,4 @@
-module VirtualDOM.Test.Main
+module Main
 
 import Specdris.SpecIO
 import VirtualDOM

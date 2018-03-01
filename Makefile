@@ -24,14 +24,15 @@ modules:
 doc:
 	$(IDRIS) --mkdoc idris-vdom.ipkg
 
-# I would prefer not to require installation, but I haven't found a better way.
-test: installmodules
-	$(IDRIS) --codegen javascript -p idris-vdom -p specdris -o vdom-test.js src/VirtualDOM/Test/Main.idr
+test: modules
+	$(IDRIS) --codegen javascript -p specdris -i src -o vdom-test.js test/Main.idr
 
-example: installmodules
-	$(IDRIS) --codegen javascript -p idris-vdom -o example/Example.js example/Example.idr
+example: modules
+	$(IDRIS) --codegen javascript -i src -o example/Example.js example/Example.idr
 
 clean:
 	$(IDRIS) --clean idris-vdom.ipkg
+	$(RM) example$(PATHSEP2)Example.ibc
+	$(RM) test$(PATHSEP2)Main.ibc
 	$(RM) vdom-test.js
 	$(RM) example$(PATHSEP2)Example.js

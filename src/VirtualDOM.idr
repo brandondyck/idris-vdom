@@ -79,10 +79,13 @@ render root Nothing Nothing = pure ()
 render root (Just oldHtml) Nothing = setInnerHTML root ""
 render root Nothing (Just html) =
   do
-    setInnerHTML root ""
     rendered <- createDOMNode html
     appendChild root rendered
     pure ()
-render root (Just x) (Just y) =
-  render root Nothing (Just y)
+render root (Just oldHtml) (Just newHtml) =
+  do
+    setInnerHTML root ""
+    rendered <- createDOMNode newHtml
+    appendChild root rendered
+    pure ()
 

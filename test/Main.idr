@@ -62,17 +62,6 @@ appendBodyParagraphWithId elementId = do
   appendChild body paragraph
   pure ()
 
-
-infixl 2 `andResult`
-
-andResult : JS_IO SpecResult -> JS_IO SpecResult -> JS_IO SpecResult
-andResult resIO1 resIO2 = do
-  res1 <- resIO1
-  res2 <- resIO2
-  pure $ do
-    res1
-    res2
-
 elementsSpec : SpecTree' FFI_JS
 elementsSpec =
   describe "elements" $ do
@@ -90,8 +79,9 @@ elementsSpec =
       render body Nothing $ Just $ node "div" [] [] [ node "p" [] [] []
                                  , node "span" [] [] []
                                  ]
-      shouldSelect "p:nth-child(1)"
-        `andResult` shouldSelect "span:nth-child(2)"
+      para1st <- shouldSelect "p:nth-child(1)"
+      span2nd <- shouldSelect "span:nth-child(2)"
+      pure $ para1st >>= const span2nd
     it "creates an element on a specified parent" $ do
       let divId = "putithere"
       body <- documentBody
@@ -112,8 +102,9 @@ propertiesSpec =
       render body Nothing $ Just $ node "p" [] [ ("class", "badval")
                             , ("class", "goodval")
                             ] []
-      shouldNotSelect "p.badval"
-        `andResult` shouldSelect "p.goodval"
+      noBadval <- shouldNotSelect "p.badval"
+      hasGoodval <- shouldSelect "p.goodval"
+      pure $ noBadval >>= const hasGoodval
     it "sets multiple properties on an element" $ do
       body <- documentBody
       render body Nothing $ Just $ node "p" [] [ ("class", "classval")
@@ -125,9 +116,10 @@ propertiesSpec =
       render body Nothing $ Just $ node "div" [] [] [ node "p" [] [("class", "a")] []
                                  , node "p" [] [("class", "b")] []
                                  ]
-      shouldSelect "p.a"
-        `andResult` shouldSelect "p.b"
-        `andResult` shouldNotSelect "p.a.b"
+      a <- shouldSelect "p.a"
+      b <- shouldSelect "p.b"
+      ab <- shouldNotSelect "p.a.b"
+      pure $ a >>= const b >>= const ab
 
 eventsSpec : SpecTree' FFI_JS
 eventsSpec =
@@ -142,9 +134,10 @@ eventsSpec =
       body <- documentBody
       render body Nothing $ Just $ node "button"
         [on "click" (const appendBodyParagraph) noOptions] [("id", "doit")] []
-      notThere <- shouldNotSelect "p"
+      pre <- shouldNotSelect "p"
       dispatchEventOnId "click" "doit"
-      pure notThere `andResult` shouldSelect "p"
+      post <- shouldSelect "p"
+      pure $ pre >>= const post
     it "respects the once option on listeners" $ do
       let opts = record { once = Just True } noOptions
       body <- documentBody
@@ -152,8 +145,10 @@ eventsSpec =
         [on "click" (const appendBodyParagraph) opts] [("id", "doit")] []
       dispatchEventOnId "click" "doit"
       dispatchEventOnId "click" "doit"
-      shouldSelect "p:only-of-type"
-        `andResult` shouldNotSelect "p:nth-of-type(2)"
+      
+      p1 <- shouldSelect "p:only-of-type"
+      p2 <- shouldNotSelect "p:nth-of-type(2)"
+      pure $ p1 >>= const p2
     it "responds on capture when capture == true" $ do
       let opts = record { capture = Just True } noOptions
       body <- documentBody
@@ -164,8 +159,9 @@ eventsSpec =
             [("id", "doit")] []
         ]
       dispatchEventOnId "click" "doit"
-      shouldSelect "p#first:nth-of-type(1)"
-        `andResult` shouldSelect "p#second:nth-of-type(2)"
+      p1 <- shouldSelect "p#first:nth-of-type(1)"
+      p2 <- shouldSelect "p#second:nth-of-type(2)"
+      pure $ p1 >>= const p2
     it "responds on bubble when capture == false" $ do
       let opts = record { capture = Just False } noOptions
       body <- documentBody
@@ -176,8 +172,9 @@ eventsSpec =
             [("id", "doit")] []
         ]
       dispatchEventOnId "click" "doit"
-      shouldSelect "p#first:nth-of-type(1)"
-        `andResult` shouldSelect "p#second:nth-of-type(2)"
+      p1 <- shouldSelect "p#first:nth-of-type(1)"
+      p2 <- shouldSelect "p#second:nth-of-type(2)"
+      pure $ p1 >>= const p2
 
 clearBody : JS_IO SpecResult -> JS_IO SpecResult
 clearBody resultIO = do
@@ -195,16 +192,18 @@ main = specIO' {around = clearBody} $ do
   describe "subsequent rendering" $ do
     it "leaves empty DOM empty when old and new virtual DOMs are Nothing" $ do
       body <- documentBody
-      precondition <- shouldNotSelect "body *"
+      pre <- shouldNotSelect "body *"
       render body Nothing Nothing
-      pure precondition `andResult` shouldNotSelect "body *"
+      post <- shouldNotSelect "body *"
+      pure $ pre >>= const post
     it "empties DOM when old virtual DOM is Just and new one is Nothing" $ do
       body <- documentBody
       let html = node "div" [] [] [ node "p" [] [] [] ]
       render body Nothing (Just html)
-      precondition <- shouldSelect "body > div > p"
+      pre <- shouldSelect "body > div > p"
       render body (Just html) Nothing
-      pure precondition `andResult` shouldNotSelect "body *"
+      post <- shouldNotSelect "body *"
+      pure $ pre >>= const post
     it "replaces DOM elements when old and new virtual DOMs are Just" $
       let
         oldHtml = Just $ node "div" [] []
@@ -219,8 +218,9 @@ main = specIO' {around = clearBody} $ do
         body <- documentBody
         render body Nothing oldHtml
         render body oldHtml newHtml
-        shouldNotSelect "body > div"
-          `andResult` shouldSelect "body > p > div:nth-of-type(2)"
+        noDiv <- shouldNotSelect "body > div"
+        twoParas <- shouldSelect "body > p > div:nth-of-type(2)"
+        pure $ noDiv >>= const twoParas
     it "removes element attributes when they are in old virtual DOM and not in new" $
       let
         oldHtml = Just $ node "div" []
@@ -232,11 +232,11 @@ main = specIO' {around = clearBody} $ do
       in do
         body <- documentBody
         render body Nothing oldHtml
-        precondition <- shouldSelect "body > div[style][title]"
+        pre <- shouldSelect "body > div[style][title]"
         render body oldHtml newHtml
-        pure precondition
-          `andResult` shouldNotSelect "body > div[style][title]"
-          `andResult` shouldSelect "body > div[title]"
+        noStyle <- shouldNotSelect "body > div[style][title]"
+        hasTitle <- shouldSelect "body > div[title]"
+        pure $ pre >>= const noStyle >>= const hasTitle
     it "adds element attributes when they are in new virtual DOM and not in old" $
       let
         oldHtml = Just $ node "div" []
@@ -248,8 +248,8 @@ main = specIO' {around = clearBody} $ do
       in do
         body <- documentBody
         render body Nothing oldHtml
-        precondition <- shouldNotSelect "body > div[style][title]"
-          `andResult` shouldSelect "body > div[title]"
+        pre1 <- shouldNotSelect "body > div[style][title]"
+        pre2 <- shouldSelect "body > div[title]"
         render body oldHtml newHtml
-        pure precondition
-          `andResult` shouldSelect "body > div[style][title]"
+        post <- shouldSelect "body > div[style][title]"
+        pure $ pre1 >>= const pre2 >>= const post

@@ -11,7 +11,7 @@ data EventHandler : Type where
 
 data Html : Type where
   HtmlElement : (tag : String) -> (events : List EventHandler) ->
-                (props : List (String, String)) -> (children : List Html) ->
+                (attribs : List (String, String)) -> (children : List Html) ->
                 Html
   HtmlText : String -> Html
 
@@ -36,6 +36,14 @@ entitize s =
       case lookup c replacements of
         Nothing => c :: cs
         (Just entity) => ('&' :: entity) ++ (';' :: cs)
+        
+updateAttribs : Node -> (old : List (String, String)) ->
+              (new : List (String, String)) -> JS_IO ()
+updateAttribs node old new =
+  do
+    sequence $ map (removeAttribute node) (map fst old)
+    sequence $ map (uncurry $ setAttribute node) new
+    pure ()
 
 mutual
   private
@@ -48,12 +56,12 @@ mutual
   private
   partial
   createDOMNode : Html -> JS_IO Node
-  createDOMNode (HtmlElement tag events props children) =
+  createDOMNode (HtmlElement tag events attribs children) =
     do
       childNodes <- sequence $ createDOMNodeList children
       el <- createElement tag
       sequence $ map (addEventHandler el) events
-      sequence $ map (uncurry $ setAttribute el) props
+      updateAttribs el [] attribs
       sequence $ map (appendChild el) childNodes
       pure el
     where

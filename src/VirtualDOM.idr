@@ -41,8 +41,8 @@ updateAttribs : Node -> (old : List (String, String)) ->
               (new : List (String, String)) -> JS_IO ()
 updateAttribs node old new =
   do
-    sequence $ map (removeAttribute node) (map fst old)
-    sequence $ map (uncurry $ setAttribute node) new
+    traverse (removeAttribute node) (map fst old)
+    traverse (uncurry $ setAttribute node) new
     pure ()
 
 mutual
@@ -60,9 +60,9 @@ mutual
     do
       childNodes <- sequence $ createDOMNodeList children
       el <- createElement tag
-      sequence $ map (addEventHandler el) events
+      traverse (addEventHandler el) events
       updateAttribs el [] attribs
-      sequence $ map (appendChild el) childNodes
+      traverse (appendChild el) childNodes
       pure el
     where
       partial

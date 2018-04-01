@@ -10,7 +10,7 @@ Things to test:
 ☑ Single element is created
 ☑ Nested elements are created
 ☑ Events work on elements
-☑ Properties are created on element
+☑ attributes are created on element
 ☑ Node is created on different root than body
 -}
 
@@ -90,14 +90,14 @@ elementsSpec =
       render parentDiv Nothing $ Just $ node "p" [] [] []
       shouldSelect "div > p"
 
-propertiesSpec : SpecTree' FFI_JS
-propertiesSpec =
-  describe "properties" $ do
-    it "sets a single property on an element" $ do
+attributesSpec : SpecTree' FFI_JS
+attributesSpec =
+  describe "attributes" $ do
+    it "sets a single attribute on an element" $ do
       body <- documentBody
       render body Nothing $ Just $ node "p" [] [("class", "testval")] []
       shouldSelect "p.testval"
-    it "overwrites properties with duplicate keys" $ do
+    it "overwrites attributes with duplicate keys" $ do
       body <- documentBody
       render body Nothing $ Just $ node "p" [] [ ("class", "badval")
                             , ("class", "goodval")
@@ -105,13 +105,13 @@ propertiesSpec =
       noBadval <- shouldNotSelect "p.badval"
       hasGoodval <- shouldSelect "p.goodval"
       pure $ noBadval >>= const hasGoodval
-    it "sets multiple properties on an element" $ do
+    it "sets multiple attributes on an element" $ do
       body <- documentBody
       render body Nothing $ Just $ node "p" [] [ ("class", "classval")
                             , ("title", "titleval")
                             ] []
       shouldSelect "p.classval[title=titleval]"
-    it "sets different properties on multiple elements" $ do
+    it "sets different attributes on multiple elements" $ do
       body <- documentBody
       render body Nothing $ Just $ node "div" [] [] [ node "p" [] [("class", "a")] []
                                  , node "p" [] [("class", "b")] []
@@ -176,20 +176,9 @@ eventsSpec =
       p2 <- shouldSelect "p#second:nth-of-type(2)"
       pure $ p1 >>= const p2
 
-clearBody : JS_IO SpecResult -> JS_IO SpecResult
-clearBody resultIO = do
-  result <- resultIO
-  body <- documentBody
-  setInnerHTML body ""
-  pure result
-
-main : JS_IO ()
-main = specIO' {around = clearBody} $ do
-  describe "initial rendering" $ do
-    elementsSpec
-    propertiesSpec
-    eventsSpec
-  describe "subsequent rendering" $ do
+elementsSpecSubsequent : SpecTree' FFI_JS
+elementsSpecSubsequent =
+  describe "elements" $ do
     it "leaves empty DOM empty when old and new virtual DOMs are Nothing" $ do
       body <- documentBody
       pre <- shouldNotSelect "body *"
@@ -221,6 +210,10 @@ main = specIO' {around = clearBody} $ do
         noDiv <- shouldNotSelect "body > div"
         twoParas <- shouldSelect "body > p > div:nth-of-type(2)"
         pure $ noDiv >>= const twoParas
+
+attributesSpecSubsequent : SpecTree' FFI_JS
+attributesSpecSubsequent =
+  describe "attributes" $ do
     it "removes element attributes when they are in old virtual DOM and not in new" $
       let
         oldHtml = Just $ node "div" []
@@ -253,3 +246,21 @@ main = specIO' {around = clearBody} $ do
         render body oldHtml newHtml
         post <- shouldSelect "body > div[style][title]"
         pure $ pre1 >>= const pre2 >>= const post
+
+
+clearBody : JS_IO SpecResult -> JS_IO SpecResult
+clearBody resultIO = do
+  result <- resultIO
+  body <- documentBody
+  setInnerHTML body ""
+  pure result
+
+main : JS_IO ()
+main = specIO' {around = clearBody} $ do
+  describe "initial rendering" $ do
+    elementsSpec
+    attributesSpec
+    eventsSpec
+  describe "subsequent rendering" $ do
+    elementsSpecSubsequent
+    attributesSpecSubsequent

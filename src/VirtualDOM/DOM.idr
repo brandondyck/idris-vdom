@@ -22,9 +22,18 @@ getElementById elementId = MkNode <$>
   jscall "document.getElementById(%0)"
     (String -> JS_IO Ptr) elementId
 
+nthChild : (parent : Node) -> (n : Int) -> JS_IO Node
+nthChild parent n = MkNode <$>
+  jscall "%0.childNodes[%1]" (Ptr -> Int -> JS_IO Ptr) (unNode parent) n
+
 appendChild : (parent : Node) -> (child : Node) -> JS_IO Node
 appendChild parent child = MkNode <$>
   jscall "(%0).appendChild(%1)" (Ptr -> Ptr -> JS_IO Ptr)
+  (unNode parent) (unNode child)
+
+removeChild : (parent : Node) -> (child : Node) -> JS_IO Node
+removeChild parent child = MkNode <$>
+  jscall "%0.removeChild(%1)" (Ptr -> Ptr -> JS_IO Ptr)
   (unNode parent) (unNode child)
 
 setAttribute : Node -> (name : String) -> (value : String) -> JS_IO ()

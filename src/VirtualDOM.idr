@@ -84,16 +84,17 @@ on = On
 partial
 render : (root : Node) -> (old : Maybe Html) -> (new : Maybe Html) -> JS_IO ()
 render root Nothing Nothing = pure ()
-render root (Just oldHtml) Nothing = setInnerHTML root ""
+render root (Just oldHtml) Nothing =
+  do
+    nthChild root 0 >>= removeChild root
+    pure ()
 render root Nothing (Just html) =
   do
-    rendered <- createDOMNode html
-    appendChild root rendered
+    createDOMNode html >>= appendChild root
     pure ()
 render root (Just oldHtml) (Just newHtml) =
   do
-    setInnerHTML root ""
-    rendered <- createDOMNode newHtml
-    appendChild root rendered
+    nthChild root 0 >>= removeChild root
+    createDOMNode newHtml >>= appendChild root
     pure ()
 

@@ -247,6 +247,31 @@ attributesSpecSubsequent =
         post <- shouldSelect "body > div[style][title]"
         pure $ pre1 >>= const pre2 >>= const post
 
+eventsSpecSubsequent : SpecTree' FFI_JS
+eventsSpecSubsequent =
+  describe "events" $ do
+    it "does not execute removed event handlers" $ do
+      let makeButton = \handlers =>
+        Just $ node "button" handlers [("id", "doit")] []
+      let html1 = makeButton [on "click" (const appendBodyParagraph) noOptions]
+      let html2 = makeButton []
+      body <- documentBody
+      render body Nothing html1
+      render body html1 html2
+      dispatchEventOnId "click" "doit"
+      shouldNotSelect "p"
+    it "executes replacement event handlers" $ do
+      let makeButton = \handlers =>
+        Just $ node "button" handlers [("id", "doit")] []
+      let makeHandler = \paraId =>
+        on "click" (const $ appendBodyParagraphWithId paraId) noOptions
+      let html1 = makeButton [makeHandler "old"]
+      let html2 = makeButton [makeHandler "new"]
+      body <- documentBody
+      render body Nothing html1
+      render body html1 html2
+      dispatchEventOnId "click" "doit"
+      shouldSelect "p#new"
 
 clearBody : JS_IO SpecResult -> JS_IO SpecResult
 clearBody resultIO = do
@@ -264,3 +289,4 @@ main = specIO' {around = clearBody} $ do
   describe "subsequent rendering" $ do
     elementsSpecSubsequent
     attributesSpecSubsequent
+    eventsSpecSubsequent

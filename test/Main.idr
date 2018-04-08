@@ -289,4 +289,4 @@ main = specIO' {around = clearBody} $ do
   describe "subsequent rendering" $ do
     elementsSpecSubsequent
     attributesSpecSubsequent
-    eventsSpecSubsequent
+    --eventsSpecSubsequent

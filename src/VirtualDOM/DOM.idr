@@ -28,7 +28,7 @@ nthChild parent n = MkNode <$>
 
 appendChild : (parent : Node) -> (child : Node) -> JS_IO Node
 appendChild parent child = MkNode <$>
-  jscall "(%0).appendChild(%1)" (Ptr -> Ptr -> JS_IO Ptr)
+  jscall "%0.appendChild(%1)" (Ptr -> Ptr -> JS_IO Ptr)
   (unNode parent) (unNode child)
 
 removeChild : (parent : Node) -> (child : Node) -> JS_IO Node

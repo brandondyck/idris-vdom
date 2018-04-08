@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- Text nodes no longer automatically escape entities
+- `render` actually diffs virtual DOMs
+- Access modifiers are more sensible
+- Event listeners are not updated on existing nodes
+
 ## 0.5.0 - 2018-03-01
 
 ### Added

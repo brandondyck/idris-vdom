@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 - 2018-04-08
+
 ### Changed
 
 - Text nodes no longer automatically escape entities

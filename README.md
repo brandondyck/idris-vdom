@@ -12,8 +12,8 @@ allows local JavaScript, and check the JavaScript console.
 - [x] Event listeners on nodes
 - [x] Properties on nodes
 - [x] Event listener options
-- [ ] Use diffing renderer that sets listeners only once per node
-- [ ] Allow updating listeners when diffing
+- [x] Use diffing renderer that sets listeners only once per node
 - [x] Allow rendering on any root element, not just `<body>`
 - [x] Write some tests already
+- [ ] Allow updating listeners when diffing
 - [ ] Clean up the API

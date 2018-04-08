@@ -8,6 +8,7 @@
 - `render` actually diffs virtual DOMs
 - Access modifiers are more sensible
 - Event listeners are not updated on existing nodes
+- Example uses `render` properly
 
 ## 0.5.0 - 2018-03-01
 

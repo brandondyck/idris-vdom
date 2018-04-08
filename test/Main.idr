@@ -4,16 +4,6 @@ import Specdris.SpecIO
 import VirtualDOM
 import VirtualDOM.DOM
 
-{-
-Things to test:
-
-☑ Single element is created
-☑ Nested elements are created
-☑ Events work on elements
-☑ attributes are created on element
-☑ Node is created on different root than body
--}
-
 querySelector : String -> JS_IO Ptr
 querySelector = jscall "document.querySelector(%0)" _
 

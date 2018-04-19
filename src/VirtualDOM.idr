@@ -24,6 +24,11 @@ updateAttribs node old new =
     traverse (removeAttribute node) (map fst old)
     traverse_ (uncurry $ setAttribute node) new
 
+partial
+addEventHandler : Node -> EventHandler -> JS_IO ()
+addEventHandler element (On eventName handler opts) =
+  addEventListener element eventName handler opts
+
 mutual
   partial
   createDOMNodeList : List Html -> List (JS_IO Node)
@@ -41,11 +46,6 @@ mutual
       updateAttribs el [] attribs
       traverse (appendChild el) childNodes
       pure el
-    where
-      partial
-      addEventHandler : Node -> EventHandler -> JS_IO ()
-      addEventHandler element (On eventName handler opts) =
-        addEventListener element eventName handler opts
   createDOMNode (HtmlText text) = createTextNode text
 
 export
@@ -68,9 +68,15 @@ indexed = zipStreamList [0..]
     zipStreamList (x :: xs) [] = []
     zipStreamList (x :: xs) (y :: ys) = (x, y) :: zipStreamList xs ys
 
+moveChildren : (count : Nat) -> (from : Node) -> (to : Node) -> JS_IO ()
+moveChildren count from to =
+  for_ [0..count] $ const $
+    nthChild from 0 >>= removeChild from >>= appendChild to
+
+-- This function is much longer than I prefer.
 partial
-renderList : (root : Node) -> (old : List (Int, Html)) ->
-             (new : List Html) -> JS_IO ()
+renderList : (root : Node) -> (old : List (Int, Html)) -> (new : List Html) ->
+             JS_IO ()
 renderList root [] [] = pure ()
 renderList root [] new@(_ :: _) =
   traverse createDOMNode new >>= traverse_ (appendChild root)
@@ -92,9 +98,30 @@ renderList root ((n, old) :: olds) (new :: news) =
           HtmlElement newTag newEvents newAttribs newChildren =>
             if oldTag == newTag
               then do
-                childNode <- nthChild root n
-                updateAttribs childNode oldAttribs newAttribs
-                renderList childNode (indexed oldChildren) newChildren
+                {- We can't remove listeners by what we can get from an
+                   EventHandler, so instead we just swap the element for
+                   a new one and transfer its children. -}
+                originalElement <- nthChild root n
+                finalElement <- if isCons oldEvents
+                  then do
+                    replacementElement <- createElement newTag
+                    updateAttribs replacementElement [] newAttribs
+                    {- This is really inefficient. We are potentially
+                       moving these children twice. This ought to
+                       be integrated with the rest of the
+                       differencing render. -}
+                    for oldChildren $ const $
+                      nthChild originalElement 0 >>=
+                        removeChild originalElement >>=
+                          appendChild replacementElement
+                    traverse (addEventHandler replacementElement) newEvents
+                    replaceChild root replacementElement originalElement
+                    pure replacementElement
+                  else do
+                    updateAttribs originalElement oldAttribs newAttribs
+                    traverse (addEventHandler originalElement) newEvents
+                    pure originalElement
+                renderList finalElement (indexed oldChildren) newChildren
               else replaceThisChild
     renderList root olds news
   where
@@ -105,11 +132,11 @@ renderList root ((n, old) :: olds) (new :: news) =
         oldChild <- nthChild root n
         newChild <- createDOMNode new
         replaceChild root newChild oldChild
-
 export
 partial
 render : (root : Node) -> (old : Maybe Html) -> (new : Maybe Html) -> JS_IO ()
-render root old new = renderList root (indexed $ toList old) (toList new)
+render root old new =
+  renderList root (indexed $ toList old) (toList new)
 -- render root Nothing Nothing = pure ()
 -- render root (Just oldHtml) Nothing =
 --   do

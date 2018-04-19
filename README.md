@@ -15,5 +15,5 @@ allows local JavaScript, and check the JavaScript console.
 - [x] Use diffing renderer that sets listeners only once per node
 - [x] Allow rendering on any root element, not just `<body>`
 - [x] Write some tests already
-- [ ] Allow updating listeners when diffing
+- [x] Allow updating listeners when diffing
 - [ ] Clean up the API

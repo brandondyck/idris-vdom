@@ -262,6 +262,23 @@ eventsSpecSubsequent =
       render body html1 html2
       dispatchEventOnId "click" "doit"
       shouldSelect "p#new"
+    it "leaves descendants intact when replacing handlers" $
+      let
+        makeHtml = \event => Just $
+          node "div" [ on event (const $ pure ()) noOptions ] []
+            [ node "p" [] []
+              [ node "button" [] [("id","thebutton")] [] ]
+            , node "span" [] [("id","thespan")] []
+            ]
+        html1 = makeHtml "mousedown"
+        html2 = makeHtml "mouseup"
+      in do
+        body <- documentBody
+        render body Nothing html1
+        render body html1 html2
+        btnExists <- shouldSelect "div>p>button#thebutton"
+        spanExists <- shouldSelect "div>span:nth-child(2)#thespan"
+        pure $ btnExists >>= const spanExists
 
 clearBody : JS_IO SpecResult -> JS_IO SpecResult
 clearBody resultIO = do
@@ -279,4 +296,4 @@ main = specIO' {around = clearBody} $ do
   describe "subsequent rendering" $ do
     elementsSpecSubsequent
     attributesSpecSubsequent
-    --eventsSpecSubsequent
+    eventsSpecSubsequent

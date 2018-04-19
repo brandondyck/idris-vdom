@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- `render` replaces elements that have listeners
+
 ## 0.6.0 - 2018-04-08
 
 ### Changed
